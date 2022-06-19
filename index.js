@@ -97,10 +97,13 @@ var str = d.toString().trim().split(' ');
 						var roles = client.guilds.cache.get(sguild).roles.cache
 						var roleList = [];
 						roles.forEach(function(role) {
-						 roleList.push([role.name, role.position, role.id, role.hoist, role.mentionable, role.managed]);
+						 roleList.push([role.position, role.name, role.id, role.hoist, role.mentionable, role.managed]);
+						});
+						roleList.sort(function (x, y) {
+							return  y[0] - x[0];
 						});
 						console.table(roleList);
-						console.log("0 = role name | 1 = role position | 2 = role id | 3 = role hoisted? | 4 = role mentionable? | 5 = role managed?");
+						console.log("0 = role position | 1 =  role name | 2 = role id | 3 = role hoisted? | 4 = role mentionable? | 5 = role managed?");
 						break;
 					case "create":
 						let croleName = str.slice(3).join(' ');
@@ -187,11 +190,17 @@ var str = d.toString().trim().split(' ');
 				if (sguild == "") {console.log("Please use the set guild command first"); break;}
 					var members = client.guilds.cache.get(sguild).members.cache
 					var memberList = [];
+					
 					members.forEach(function(member) {
-					 memberList.push([member.user.id, member.user.tag, member.user.bot])
+						var memberNick = member.nickname;
+						if (memberNick == null) memberNick = "";
+					 memberList.push([member.user.id, member.user.tag, memberNick,  member.user.bot, new Date(member.user.createdTimestamp).toLocaleString(), new Date(member.joinedTimestamp).toLocaleString()])
+					});
+					memberList.sort(function (x, y) {
+						return x[1] == y[1] ? 0 : x[1] > y[1] ? 1 : -1;
 					});
 					console.table(memberList);
-					console.log("0 = member id | 1 = member name | 3 = bot?");
+					console.log("0 = member id | 1 = member name | 3 = nickname | 4 = bot? | 5 = Account Creation Date | 6 = Join Date");
 					break;
 				default:
 				sendHelpCommand();
@@ -280,42 +289,13 @@ var str = d.toString().trim().split(' ');
 						let memberBoostStatus = (member.premiumSinceTimestamp == null) ? false : true
 						if (member.nickname == null) memberNickname = "";
 						var memberInfo = [
-							{
-								key: "Username",
-								value: member.user.tag
-							},
-							{
-								key: "Joined",
-								value: new Date(member.joinedTimestamp).toLocaleString()
-							},
-							{
-								key: "Nickname",
-								value: memberNickname
-							},
-							{
-								key: "Status",
-								value: memberStatus
-							},
-							{
-								key: "Roles",
-								value: member.roles.cache.map(r => `${r.name}`).join(' | ')
-							},
-							{
-								key: "Account Creation Date",
-								value: new Date(member.user.createdTimestamp).toLocaleString()
-							},
-							{
-								key: "Bot User",
-								value: member.user.bot
-							},
-							{
-								key: "Can this user be kicked/banned?",
-								value: member.bannable
-							},
-							{
-								key: "Has boosted?",
-								value: memberBoostStatus
-							}
+							{key: "Username",value: member.user.tag},{key: "Joined",value: new Date(member.joinedTimestamp).toLocaleString()},
+							{key: "Nickname",value: memberNickname},{key: "Status",value: memberStatus},
+							{key: "Roles",value: member.roles.cache.map(r => `${r.name}`).join(' | ')},
+							{key: "Account Creation Date",value: new Date(member.user.createdTimestamp).toLocaleString()},
+							{key: "Bot User",value: member.user.bot},
+							{key: "Can this user be kicked/banned?",value: member.bannable},
+							{key: "Has boosted?",value: memberBoostStatus}
 						];
 						
 						console.table(memberInfo);
@@ -338,112 +318,34 @@ var str = d.toString().trim().split(' ');
   
 function sendHelpCommand() {
 	var commands = [
-    {
-        command: "login [token]",
-        description: "Assign a token to the bot and authenticate with the Discord API"
-    },
-    {
-        command: "clear",
-        description: "Clear the console"
-    },
-    {
-        command: "logout",
-        description: "Destroy your session"
-    },
-	{
-        command: "exit",
-        description: "Close the program"
-    },
-    {
-        command: "set guild [guildid]",
-        description: "Set the guild to interact with"
-    },
-    {
-        command: "set user [userid]",
-        description: "Set the user to interact with"
-    },
-	{
-        command: "set role [roleid]",
-        description: "Set the role to interact with"
-    },
+    {command: "login [token]",description: "Assign a token to the bot and authenticate with the Discord API"},
+    {command: "clear",description: "Clear the console"},
+    {command: "logout",description: "Destroy your session"},
+	{command: "exit",description: "Close the program"},
+    {command: "set guild [guildid]",description: "Set the guild to interact with"},
+    {command: "set user [userid]",description: "Set the user to interact with"},
+	{command: "set role [roleid]",description: "Set the role to interact with"},
 	{command: "──────────────────────────────────────────────", description: "───────────────────────────────────────────────────────────────────"},
-	{
-        command: "guild list",
-        description: "List all guilds"
-    },
-	{
-        command: "guild roles list",
-        description: "List all roles in a guild"
-    },
-	{
-        command: "guild roles create [name]",
-        description: "Create a role in the guild"
-    },
-	{
-        command: "guild roles edit name [name]",
-        description: "Change the name of a role in a guild"
-    },
-	{
-        command: "guild roles edit permission [permissionID]",
-        description: "Set the permission level of a role in a guild"
-    },
-	{
-        command: "guild roles edit position [position]",
-        description: "Set the position of a role in a guild"
-    },
-	{
-        command: "guild roles edit color [hexcolor]",
-        description: "Change the color of a role in a guild"
-    },
-	{
-        command: "guild roles edit mentionable",
-        description: "Toggle the mentionable status of a role in a guild"
-    },
-	{
-        command: "guild roles edit hoisted",
-        description: "Toggle the hoisted status of a role in a guild"
-    },
-		{
-        command: "guild roles remove [roleid]",
-        description: "Remove a role from a guild"
-    },
-	{
-        command: "guild members",
-        description: "List all members in a guild"
-    },
+	{command: "guild list",description: "List all guilds"},
+	{command: "guild roles list",description: "List all roles in a guild"},
+	{command: "guild roles create [name]",description: "Create a role in the guild"},
+	{command: "guild roles edit name [name]",description: "Change the name of a role in a guild"},
+	{command: "guild roles edit permission [permissionID]",description: "Set the permission level of a role in a guild"},
+	{command: "guild roles edit position [position]",description: "Set the position of a role in a guild"},
+	{command: "guild roles edit color [hexcolor]",description: "Change the color of a role in a guild"},
+	{command: "guild roles edit mentionable",description: "Toggle the mentionable status of a role in a guild"},
+	{command: "guild roles edit hoisted",description: "Toggle the hoisted status of a role in a guild"},
+	{command: "guild roles remove [roleid]",description: "Remove a role from a guild"},
+	{command: "guild members",description: "List all members in a guild"},
 	{command: "──────────────────────────────────────────────", description: "───────────────────────────────────────────────────────────────────"},
-	{
-        command: "user role assign [roleid]",
-        description: "Assign a role to a member"
-    },
-	{
-        command: "user role remove [roleid]",
-        description: "Remove a role from a member"
-    },
-	{
-		 command: "user kick [reason]",
-        description: "Kick a member from the guild"
-	},
-	{
-		 command: "user ban [reason]",
-        description: "Ban a member from the guild"
-	},
-	{
-		 command: "user timeout [time in minutes] [reason]",
-        description: "Timeout a member from the guild"
-	},
-	{
-		 command: "user nickname [new name]",
-        description: "Change the nickname of a member in the guild"
-	},
-	{
-		 command: "user message [message]",
-        description: "Send a private message to the member"
-	},
-	{
-		 command: "user info",
-        description: "See more information about a member"
-	}    
+	{command: "user role assign [roleid]",description: "Assign a role to a member"},
+	{command: "user role remove [roleid]",description: "Remove a role from a member"},
+	{command: "user kick [reason]",description: "Kick a member from the guild"},
+	{command: "user ban [reason]",description: "Ban a member from the guild"},
+	{command: "user timeout [time in minutes] [reason]",description: "Timeout a member from the guild"},
+	{command: "user nickname [new name]",description: "Change the nickname of a member in the guild"},
+	{command: "user message [message]",description: "Send a private message to the member"},
+	{command: "user info",description: "See more information about a member"}
 ];
 			console.table(commands);
 }
