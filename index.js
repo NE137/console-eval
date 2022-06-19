@@ -207,20 +207,32 @@ var str = d.toString().trim().split(' ');
 					break;
 				case "members": // Fetch all members
 				if (sguild == "") {console.log("Please use the set guild command first"); break;}
+				let detailed = (str[2] == "true") ? true : false;
+				console.log(detailed);
 					var members = client.guilds.cache.get(sguild).members.cache
 					var memberList = [];
 					
-					members.forEach(function(member) {
-						var memberNick = member.nickname;
-						let memberStatus = (member.presence == null) ? "offline" : member.presence.status
-						if (memberNick == null) memberNick = "";
-					 memberList.push([member.user.id, member.user.tag, memberNick, memberStatus, member.user.bot, new Date(member.user.createdTimestamp).toLocaleString(), new Date(member.joinedTimestamp).toLocaleString()])
-					});
+					if (detailed) {
+						members.forEach(function(member) {
+							var memberNick = member.nickname;
+							let memberStatus = (member.presence == null) ? "offline" : member.presence.status
+							if (memberNick == null) memberNick = "";
+						 memberList.push([member.user.id, member.user.tag, memberNick, memberStatus, member.user.bot, new Date(member.user.createdTimestamp).toLocaleString(), new Date(member.joinedTimestamp).toLocaleString()])
+						});
+					} else {
+						members.forEach(function(member) {
+							var memberNick = member.nickname;
+							if (memberNick == null) memberNick = "";
+						 memberList.push([member.user.id, member.user.tag, memberNick, member.user.bot])
+						});
+					}
+					
 					memberList.sort(function (x, y) {
 						return x[1] == y[1] ? 0 : x[1] > y[1] ? 1 : -1;
 					});
 					console.table(memberList);
-					console.log("0 = member id | 1 = member name | 3 = nickname | 4 = bot? | 5 = Account Creation Date | 6 = Join Date");
+					if (detailed) console.log("0 = member id | 1 = member name | 3 = nickname | 4 = bot? | 5 = Account Creation Date | 6 = Join Date");
+					if (!detailed) console.log("0 = member id | 1 = member name | 3 = nickname | 4 = bot?");
 					break;
 				default:
 				sendHelpCommand();
@@ -299,6 +311,7 @@ var str = d.toString().trim().split(' ');
 						console.log(`Sent the message '${message}' to ${convertUserIDtoUserName(suser)}`);
 					break;
 				case "info":
+					let detailed = (str[2] == "true") ? true : false;
 					var member = client.guilds.cache.get(sguild).members.cache.get(suser);
 					if (member == null) {
 						console.log(`Unable to find user ${convertUserIDtoUserName(suser)}`);
@@ -308,19 +321,28 @@ var str = d.toString().trim().split(' ');
 						let memberStatus = (member.presence == null) ? "offline" : member.presence.status
 						let memberBoostStatus = (member.premiumSinceTimestamp == null) ? false : true
 						if (member.nickname == null) memberNickname = "";
-						var memberInfo = [
-							{key: "Username",value: member.user.tag},{key: "Joined",value: new Date(member.joinedTimestamp).toLocaleString()},
-							{key: "Nickname",value: memberNickname},{key: "Status",value: memberStatus},
-							{key: "Roles",value: member.roles.cache.map(r => `${r.name}`).join(' | ')},
-							{key: "Account Creation Date",value: new Date(member.user.createdTimestamp).toLocaleString()},
-							{key: "Bot User",value: member.user.bot},
-							{key: "Can this user be kicked/banned?",value: member.bannable},
-							{key: "Has boosted?",value: memberBoostStatus}
-						];
-						
-						console.table(memberInfo);
+						if (detailed) {
+							var memberInfo = [
+								{key: "Username",value: member.user.tag},{key: "Joined",value: new Date(member.joinedTimestamp).toLocaleString()},
+								{key: "Nickname",value: memberNickname},{key: "Status",value: memberStatus},
+								{key: "Roles",value: member.roles.cache.map(r => `${r.name}`).join(' | ')},
+								{key: "Account Creation Date",value: new Date(member.user.createdTimestamp).toLocaleString()},
+								{key: "Bot User",value: member.user.bot},
+								{key: "Can this user be kicked/banned?",value: member.bannable},
+								{key: "Has boosted?",value: memberBoostStatus},
+								{key: "Avatar", value: member.user.avatarURL()}
+							]; console.table(memberInfo);
+						} else {
+							var memberInfo = [
+								{key: "Username",value: member.user.tag},{key: "Joined",value: new Date(member.joinedTimestamp).toLocaleString()},
+								{key: "Nickname",value: memberNickname},{key: "Status",value: memberStatus},
+								{key: "Account Creation Date",value: new Date(member.user.createdTimestamp).toLocaleString()},
+								{key: "Bot User",value: member.user.bot},
+								{key: "Can this user be kicked/banned?",value: member.bannable},
+								{key: "Has boosted?",value: memberBoostStatus}
+							]; console.table(memberInfo);
+						}
 					}
-					
 					break;
 				default:
 					sendHelpCommand();
@@ -341,39 +363,40 @@ var str = d.toString().trim().split(' ');
   
 function sendHelpCommand() {
 	var commands = [
-    {command: "login [token]",description: "Assign a token to the bot and authenticate with the Discord API"},
+    {command: "login <token>",description: "Assign a token to the bot and authenticate with the Discord API"},
     {command: "clear",description: "Clear the console"},
     {command: "logout",description: "Destroy your session"},
 	{command: "exit",description: "Close the program"},
-    {command: "set guild [guildid]",description: "Set the guild to interact with"},
-    {command: "set user [userid]",description: "Set the user to interact with"},
-	{command: "set role [roleid]",description: "Set the role to interact with"},
+    {command: "set guild <id>",description: "Set the guild to interact with"},
+    {command: "set user <id>",description: "Set the user to interact with"},
+	{command: "set role <id>",description: "Set the role to interact with"},
 	{command: "──────────────────────────────────────────────", description: "───────────────────────────────────────────────────────────────────"},
 	{command: "guild list",description: "List all guilds"},
 	{command: "guild invites",description: "List all invites"},
 	{command: "guild roles list",description: "List all roles in a guild"},
-	{command: "guild roles create [name]",description: "Create a role in the guild"},
-	{command: "guild roles edit name [name]",description: "Change the name of a role in a guild"},
-	{command: "guild roles edit permission [permissionID]",description: "Set the permission level of a role in a guild"},
-	{command: "guild roles edit position [position]",description: "Set the position of a role in a guild"},
-	{command: "guild roles edit color [hexcolor]",description: "Change the color of a role in a guild"},
+	{command: "guild roles create <name>",description: "Create a role in the guild"},
+	{command: "guild roles edit name <name>",description: "Change the name of a role in a guild"},
+	{command: "guild roles edit permission <id>",description: "Set the permission level of a role in a guild"},
+	{command: "guild roles edit position <position>",description: "Set the position of a role in a guild"},
+	{command: "guild roles edit color <hexcolor>",description: "Change the color of a role in a guild"},
 	{command: "guild roles edit mentionable",description: "Toggle the mentionable status of a role in a guild"},
 	{command: "guild roles edit hoisted",description: "Toggle the hoisted status of a role in a guild"},
-	{command: "guild roles remove [roleid]",description: "Remove a role from a guild"},
-	{command: "guild members",description: "List all members in a guild"},
+	{command: "guild roles remove [id]",description: "Remove a role from a guild"},
+	{command: "guild members [detailed]",description: "List all members in a guild"},
 	{command: "──────────────────────────────────────────────", description: "───────────────────────────────────────────────────────────────────"},
-	{command: "user roles assign [roleid]",description: "Assign a role to a member"},
-	{command: "user roles remove [roleid]",description: "Remove a role from a member"},
-	{command: "user kick [reason]",description: "Kick a member from the guild"},
-	{command: "user ban [reason]",description: "Ban a member from the guild"},
-	{command: "user timeout [time in minutes] [reason]",description: "Timeout a member from the guild"},
-	{command: "user nickname [new name]",description: "Change the nickname of a member in the guild"},
-	{command: "user message [message]",description: "Send a private message to the member"},
-	{command: "user info",description: "See more information about a member"},
+	{command: "user roles assign [id]",description: "Assign a role to a member"},
+	{command: "user roles remove [id]",description: "Remove a role from a member"},
+	{command: "user kick <reason>",description: "Kick a member from the guild"},
+	{command: "user ban <reason>",description: "Ban a member from the guild"},
+	{command: "user timeout <time in minutes> <reason>",description: "Timeout a member from the guild"},
+	{command: "user nickname <nickname>",description: "Change the nickname of a member in the guild"},
+	{command: "user message <message>",description: "Send a private message to the member"},
+	{command: "user info [detailed]",description: "See more information about a member"},
 	{command: "──────────────────────────────────────────────", description: "───────────────────────────────────────────────────────────────────"},
-	{command: "eval [command]",description: "Evaluate a command"}
+	{command: "eval <command>",description: "Evaluate a command"}
 ];
-			console.table(commands);
+console.log("Discord Console - By Nyx │ [detailed] is a boolean value")			
+console.table(commands);
 }
   
 function convertRoleIDtoRoleName(roleID) {
