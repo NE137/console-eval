@@ -15,7 +15,7 @@ client.on('destroy', onDestroy);
 
 async function onReady() {
   console.clear();
-  log(`Logged in as ${client.user.tag}!`);
+  console.log(`Logged in as ${client.user.tag}!`);
 }
 
 async function onDestroy() {
@@ -85,10 +85,26 @@ var str = d.toString().trim().split(' ');
 					var guilds = client.guilds.cache;
 					var guildList = [];
 					guilds.forEach(function(guild) {
-					 guildList.push([guild.name, guild.id, guild.memberCount]);
+					 guildList.push([guild.name, guild.id, guild.memberCount, convertGuildOwnerIDToTag(guild.id)]);
 					});
 					console.table(guildList);
-					console.log("0 = guild name | 1 = guild id | 2 = member count");
+					console.log("0 = guild name | 1 = guild id | 2 = member count | 3 = Guild Owner | 4 = Invite Code");
+					break;
+				case "invites":
+					if (sguild == "") {console.log("Please use the set guild command first"); break;}
+					client.guilds.cache.get(sguild).invites.fetch().then(() => {
+						var invites = client.guilds.cache.get(sguild).invites.cache
+						var inviteList = [];
+						invites.forEach(function(invite) {
+							let expiryDate = new Date(invite.expiresTimestamp).toLocaleString();
+							if (expiryDate == "1/1/1970, 01:00:00") {expiryDate = "∞"}
+							let uses = (invite.maxUses == 0) ? invite.uses : invite.uses +"/"+invite.maxUses;
+						 inviteList.push([convertUserIDtoUserName(invite.inviterId), invite.channel.name, uses, expiryDate, "https://discord.gg/"+invite.code]);
+						});
+						console.table(inviteList);
+						console.log("0 = Inviter | 1 = Channel Name | 2 = Usage Counter | 3 = Expiry date | 4 = Invite Code");
+					});
+					
 					break;
 				case "roles":
 					if (sguild == "") {console.log("Please use the set guild command first"); break;}
@@ -193,8 +209,9 @@ var str = d.toString().trim().split(' ');
 					
 					members.forEach(function(member) {
 						var memberNick = member.nickname;
+						let memberStatus = (member.presence == null) ? "offline" : member.presence.status
 						if (memberNick == null) memberNick = "";
-					 memberList.push([member.user.id, member.user.tag, memberNick,  member.user.bot, new Date(member.user.createdTimestamp).toLocaleString(), new Date(member.joinedTimestamp).toLocaleString()])
+					 memberList.push([member.user.id, member.user.tag, memberNick, memberStatus, member.user.bot, new Date(member.user.createdTimestamp).toLocaleString(), new Date(member.joinedTimestamp).toLocaleString()])
 					});
 					memberList.sort(function (x, y) {
 						return x[1] == y[1] ? 0 : x[1] > y[1] ? 1 : -1;
@@ -306,8 +323,11 @@ var str = d.toString().trim().split(' ');
 					sendHelpCommand();
 			}
 			break;
+		case "eval":
+			console.log(eval(str.slice(1).join(' ')));
+			break;
 		default:
-			console.log(eval(d.toString().trim()));
+			sendHelpCommand();
 			break;
 	}
 } catch (err) {
@@ -327,6 +347,7 @@ function sendHelpCommand() {
 	{command: "set role [roleid]",description: "Set the role to interact with"},
 	{command: "──────────────────────────────────────────────", description: "───────────────────────────────────────────────────────────────────"},
 	{command: "guild list",description: "List all guilds"},
+	{command: "guild invites",description: "List all invites"},
 	{command: "guild roles list",description: "List all roles in a guild"},
 	{command: "guild roles create [name]",description: "Create a role in the guild"},
 	{command: "guild roles edit name [name]",description: "Change the name of a role in a guild"},
@@ -345,7 +366,9 @@ function sendHelpCommand() {
 	{command: "user timeout [time in minutes] [reason]",description: "Timeout a member from the guild"},
 	{command: "user nickname [new name]",description: "Change the nickname of a member in the guild"},
 	{command: "user message [message]",description: "Send a private message to the member"},
-	{command: "user info",description: "See more information about a member"}
+	{command: "user info",description: "See more information about a member"},
+	{command: "──────────────────────────────────────────────", description: "───────────────────────────────────────────────────────────────────"},
+	{command: "eval [command]",description: "Evaluate a command"}
 ];
 			console.table(commands);
 }
@@ -361,6 +384,10 @@ function convertUserIDtoUserName(userID) {
 	if (client.guilds.cache.get(sguild).members.cache.get(userID)) {
 	return client.guilds.cache.get(sguild).members.cache.get(userID).user.username; } else {return userID}
 } 
+
+function convertGuildOwnerIDToTag(guildID) {
+	return client.guilds.cache.get(guildID).members.cache.get(client.guilds.cache.get(guildID).ownerId).user.tag;
+}
 
 function convertGuildIDtoGuildName(guildID) {
 	if (client.guilds.cache.get(sguild)) {
