@@ -143,8 +143,11 @@ var str = d.toString().trim().split(' ');
 								break;
 							case "permission": // https://discord.com/developers/docs/topics/permissions#permissions-bitwise-permission-flags
 								if (client.guilds.cache.get(sguild).roles.cache.get(srole)) {
-									client.guilds.cache.get(sguild).roles.cache.get(srole).setPermissions(str[4]);
-									console.log(`The permissions of the role ${convertRoleIDtoRoleName(srole)} has been changed to ${str[4]}`);
+									let perm = str[4];
+									if (perm == "clear") perm = "0"
+									if (perm == "all") perm = "8"
+									client.guilds.cache.get(sguild).roles.cache.get(srole).setPermissions(perm);
+									console.log(`The permissions of the role ${convertRoleIDtoRoleName(srole)} has been changed to ${perm}`);
 								} else {
 									console.log(`No role with ID ${srole} exists in guild ${convertGuildIDtoGuildName(sguild)}`);
 								}
@@ -229,7 +232,7 @@ var str = d.toString().trim().split(' ');
 		if (sguild == "") {console.log("Please use the set guild command first"); break;}
 		if (suser == "") {console.log("Please use the set user command first"); break;}
 			switch(str[1]) {
-				case "role":
+				case "roles":
 					switch(str[2]) {
 						case "assign":
 							let reqrole = str[3];
@@ -359,8 +362,8 @@ function sendHelpCommand() {
 	{command: "guild roles remove [roleid]",description: "Remove a role from a guild"},
 	{command: "guild members",description: "List all members in a guild"},
 	{command: "──────────────────────────────────────────────", description: "───────────────────────────────────────────────────────────────────"},
-	{command: "user role assign [roleid]",description: "Assign a role to a member"},
-	{command: "user role remove [roleid]",description: "Remove a role from a member"},
+	{command: "user roles assign [roleid]",description: "Assign a role to a member"},
+	{command: "user roles remove [roleid]",description: "Remove a role from a member"},
 	{command: "user kick [reason]",description: "Kick a member from the guild"},
 	{command: "user ban [reason]",description: "Ban a member from the guild"},
 	{command: "user timeout [time in minutes] [reason]",description: "Timeout a member from the guild"},
